@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Oracle of Coherence</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Raleway:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --gold:#C9A84C; --gold-light:#E8D5A3; --gold-dim:#7A6030;
+  --deep:#06060E; --surface:#1A1A2E; --surface2:#1E1E35;
+  --text:#EAE6D8; --text-dim:#9E9A8A;
+  --accent:#7B5EA7; --accent2:#4A90B8; --rose:#C47A8A;
+  --teal:#4AADA8; --ember:#D4703A;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--deep);color:var(--text);font-family:'Cormorant Garamond',Georgia,serif;min-height:100vh;overflow-x:hidden;}
+#starfield{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;background:radial-gradient(ellipse at 20% 30%,#0D0820,transparent 60%),radial-gradient(ellipse at 80% 70%,#070D1A,transparent 60%),var(--deep);}
+.star{position:absolute;border-radius:50%;background:white;animation:twinkle var(--d) ease-in-out infinite;}
+@keyframes twinkle{0%,100%{opacity:var(--a1);transform:scale(1)}50%{opacity:var(--a2);transform:scale(1.3)}}
+.sacred-bg{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:800px;height:800px;opacity:0.03;pointer-events:none;z-index:0;animation:slowspin 120s linear infinite;}
+@keyframes slowspin{from{transform:translate(-50%,-50%) rotate(0deg)}to{transform:translate(-50%,-50%) rotate(360deg)}}
+.app{position:relative;z-index:1;max-width:820px;margin:0 auto;padding:40px 24px 80px;}
+.screen{display:none;animation:fadeIn 0.7s ease;}
+.screen.active{display:block;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+
+/* Type */
+.display-title{font-family:'Cinzel Decorative',serif;font-size:clamp(22px,5vw,40px);color:var(--gold);letter-spacing:0.08em;text-align:center;text-shadow:0 0 60px rgba(201,168,76,0.3);}
+.display-sub{font-family:'Cormorant Garamond',serif;font-size:clamp(14px,2.5vw,18px);color:var(--gold-light);font-style:italic;letter-spacing:0.15em;text-align:center;font-weight:300;}
+h2{font-family:'Cinzel Decorative',serif;font-size:clamp(15px,3vw,22px);color:var(--gold);letter-spacing:0.06em;margin-bottom:10px;}
+.label-sm{font-family:'Raleway',sans-serif;font-size:11px;font-weight:500;letter-spacing:0.22em;text-transform:uppercase;color:var(--gold-dim);}
+p{font-size:17px;line-height:1.75;color:var(--text-dim);}
+
+/* Divider */
+.divider{display:flex;align-items:center;gap:16px;margin:28px 0;}
+.divider-line{flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--gold-dim),transparent);}
+.divider-glyph{color:var(--gold);font-size:16px;}
+
+/* Buttons */
+.btn-primary{display:inline-block;font-family:'Raleway',sans-serif;font-size:12px;font-weight:500;letter-spacing:0.25em;text-transform:uppercase;color:var(--deep);background:linear-gradient(135deg,var(--gold),#A8782A);border:none;border-radius:2px;padding:13px 36px;cursor:pointer;transition:all 0.3s;}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(201,168,76,0.3);}
+.btn-secondary{display:inline-block;font-family:'Raleway',sans-serif;font-size:12px;font-weight:500;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);background:transparent;border:1px solid var(--gold-dim);border-radius:2px;padding:11px 28px;cursor:pointer;transition:all 0.3s;}
+.btn-secondary:hover{border-color:var(--gold);background:rgba(201,168,76,0.05);}
+.btn-ghost{font-family:'Raleway',sans-serif;font-size:12px;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-dim);background:transparent;border:none;cursor:pointer;transition:color 0.2s;}
+.btn-ghost:hover{color:var(--text);}
+
+/* Card */
+.card{background:var(--surface);border:1px solid rgba(201,168,76,0.15);border-radius:4px;padding:24px 28px;margin-bottom:16px;}
+
+/* Form */
+.form-group{margin-bottom:14px;}
+.form-label{display:block;font-family:'Raleway',sans-serif;font-size:10px;letter-spacing:0.22em;text-transform:uppercase;color:var(--text-dim);margin-bottom:5px;}
+.form-input{width:100%;padding:10px 14px;background:rgba(0,0,0,0.3);border:1px solid rgba(201,168,76,0.2);border-radius:2px;color:var(--text);font-family:'Cormorant Garamond',serif;font-size:16px;outline:none;transition:border-color 0.2s;}
+.form-input:focus{border-color:rgba(201,168,76,0.55);}
+.form-input::placeholder{color:var(--text-dim);opacity:0.45;}
+.form-input:disabled{opacity:0.4;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+@media(max-width:560px){.form-row{grid-template-columns:1fr;}}
+
+/* Method toggle */
+.method-toggle{display:flex;gap:8px;margin-bottom:18px;}
+.method-btn{flex:1;padding:9px 10px;font-family:'Raleway',sans-serif;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;background:transparent;border:1px solid rgba(201,168,76,0.18);color:var(--text-dim);border-radius:2px;cursor:pointer;transition:all 0.2s;}
+.method-btn.active{background:rgba(201,168,76,0.1);border-color:var(--gold);color:var(--gold);}
+
+/* Upload */
+.upload-area{border:1px dashed rgba(201,168,76,0.3);border-radius:4px;padding:24px;text-align:center;cursor:pointer;transition:all 0.2s;position:relative;overflow:hidden;}
+.upload-area:hover{border-color:var(--gold);background:rgba(201,168,76,0.04);}
+.upload-area input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.source-link{display:inline-flex;align-items:center;gap:5px;font-family:'Raleway',sans-serif;font-size:11px;letter-spacing:0.1em;color:var(--accent2);text-decoration:none;border-bottom:1px solid rgba(74,144,184,0.3);transition:border-color 0.2s;}
+.source-link:hover{border-color:var(--accent2);}
+
+/* Selection grid */
+.sel-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;}
+@media(max-width:560px){.sel-grid{grid-template-columns:1fr;}}
+.sel-card{background:var(--surface);border:2px solid rgba(201,168,76,0.12);border-radius:6px;padding:18px 20px;cursor:pointer;transition:all 0.25s;position:relative;user-select:none;}
+.sel-card:hover{border-color:rgba(201,168,76,0.35);background:var(--surface2);}
+.sel-card.selected{border-color:var(--gold);background:rgba(201,168,76,0.07);}
+.sel-check{position:absolute;top:14px;right:14px;width:20px;height:20px;border-radius:50%;border:1.5px solid rgba(201,168,76,0.3);display:flex;align-items:center;justify-content:center;font-size:11px;transition:all 0.2s;}
+.sel-card.selected .sel-check{background:var(--gold);border-color:var(--gold);color:var(--deep);}
+.sel-icon-wrap{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:10px;font-size:20px;}
+.sel-name{font-family:'Cinzel Decorative',serif;font-size:11px;color:var(--gold);letter-spacing:0.05em;margin-bottom:4px;}
+.sel-desc{font-size:13px;color:var(--text-dim);font-style:italic;line-height:1.4;}
+.sel-tier{font-family:'Raleway',sans-serif;font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold-dim);margin-top:6px;}
+
+/* Progress */
+.progress-wrap{margin-bottom:32px;}
+.progress-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.progress-track{height:2px;background:rgba(201,168,76,0.12);border-radius:1px;}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--gold-dim),var(--gold));border-radius:1px;transition:width 0.5s ease;}
+.progress-dots{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;}
+.pdot{width:7px;height:7px;border-radius:50%;background:rgba(201,168,76,0.2);transition:all 0.3s;cursor:default;}
+.pdot.done{background:var(--gold-dim);}
+.pdot.current{background:var(--gold);transform:scale(1.4);}
+
+/* System screen header */
+.sys-header{display:flex;align-items:center;gap:16px;margin-bottom:24px;}
+.sys-big-icon{width:54px;height:54px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;border:1px solid rgba(201,168,76,0.25);}
+
+/* Calc loader */
+.calc-loader{display:flex;align-items:center;gap:12px;padding:12px 16px;background:rgba(201,168,76,0.06);border:1px solid rgba(201,168,76,0.2);border-radius:4px;margin-bottom:14px;}
+.calc-loader svg{flex-shrink:0;animation:slowspin 1.5s linear infinite;}
+.calc-loader.done{background:rgba(74,173,168,0.06);border-color:rgba(74,173,168,0.3);}
+.calc-loader.done svg{animation:none;}
+.calc-loader.err{border-color:rgba(224,85,85,0.3);}
+.calc-loader.err svg{animation:none;}
+
+/* Loading */
+.oracle-spinner{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:65vh;gap:24px;}
+.mandala{width:110px;height:110px;animation:slowspin 8s linear infinite;}
+.loading-text{font-size:19px;font-style:italic;color:var(--gold-light);text-align:center;animation:pulse 2s ease-in-out infinite;}
+.loading-step{font-family:'Raleway',sans-serif;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-dim);text-align:center;}
+@keyframes pulse{0%,100%{opacity:0.6}50%{opacity:1}}
+
+/* Report */
+.report-sec{margin-bottom:44px;padding-bottom:44px;border-bottom:1px solid rgba(201,168,76,0.1);}
+.report-sec:last-child{border-bottom:none;}
+.report-sec-header{display:flex;align-items:center;gap:14px;margin-bottom:18px;}
+.sec-icon{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.2);flex-shrink:0;}
+.sec-title{font-family:'Cinzel Decorative',serif;font-size:clamp(14px,2.5vw,19px);color:var(--gold);letter-spacing:0.05em;}
+.sec-sub{font-size:14px;color:var(--text-dim);font-style:italic;margin-top:2px;}
+.report-text{font-size:17px;line-height:1.85;color:var(--text);font-weight:300;}
+.report-text p{margin-bottom:1.1em;}
+.pill{display:inline-block;font-family:'Raleway',sans-serif;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;padding:3px 10px;border-radius:20px;background:rgba(201,168,76,0.1);color:var(--gold-dim);margin:2px;border:1px solid rgba(201,168,76,0.2);}
+.data-controls{display:flex;gap:12px;flex-wrap:wrap;margin-top:32px;padding-top:24px;border-top:1px solid rgba(201,168,76,0.1);}
+.err-txt{color:#E05555;font-size:13px;margin-top:6px;font-style:italic;}
+@media print{#starfield,.sacred-bg,.data-controls,.btn-primary,.btn-secondary,.progress-wrap,.method-toggle{display:none!important}body{background:white;color:black}.report-text{color:#333}.display-title,h2,.sec-title{color:#7A5C1E}}
+</style>
+</head>
+<body>
+<div id="starfield"></div>
+<svg class="sacred-bg" viewBox="0 0 800 800" fill="none">
+  <circle cx="400" cy="400" r="350" stroke="#C9A84C" stroke-width="1"/>
+  <circle cx="400" cy="400" r="250" stroke="#C9A84C" stroke-width="1"/>
+  <circle cx="400" cy="400" r="150" stroke="#C9A84C" stroke-width="1"/>
+  <polygon points="400,50 700,575 100,575" stroke="#C9A84C" stroke-width="1" fill="none"/>
+  <polygon points="400,750 100,225 700,225" stroke="#C9A84C" stroke-width="1" fill="none"/>
+  <circle cx="400" cy="400" r="50" stroke="#C9A84C" stroke-width="1"/>
+  <line x1="400" y1="50" x2="400" y2="750" stroke="#C9A84C" stroke-width="0.5"/>
+  <line x1="50" y1="400" x2="750" y2="400" stroke="#C9A84C" stroke-width="0.5"/>
+  <line x1="100" y1="225" x2="700" y2="575" stroke="#C9A84C" stroke-width="0.5"/>
+  <line x1="700" y1="225" x2="100" y2="575" stroke="#C9A84C" stroke-width="0.5"/>
+</svg>
+
+<div class="app">
+
+<!-- WELCOME -->
+<div class="screen active" id="screen-welcome">
+  <div style="text-align:center;padding:60px 0 40px">
+    <div class="label-sm" style="margin-bottom:20px">A Living Mirror</div>
+    <div class="display-title" style="margin-bottom:14px">Oracle of Coherence</div>
+    <div class="display-sub" style="margin-bottom:36px">Seven Systems. One Soul. Your Synthesis.</div>
+    <p style="max-width:540px;margin:0 auto 32px;text-align:center;font-size:18px;line-height:1.85">
+      You are not a single thing. You are an intersection — of stars and archetypes, of karma and will,
+      of eros and purpose. This oracle reads ancient and modern systems and weaves them into a coherent
+      portrait of <em style="color:var(--gold-light)">you</em>.
+    </p>
+    <div class="divider"><div class="divider-line"></div><div class="divider-glyph">✦</div><div class="divider-line"></div></div>
+    <div style="background:rgba(201,168,76,0.04);border:1px solid rgba(201,168,76,0.12);border-radius:4px;padding:18px 24px;max-width:540px;margin:24px auto;text-align:left">
+      <div class="label-sm" style="margin-bottom:8px">Before we begin</div>
+      <p style="font-size:15px;line-height:1.7">This is contemplative, not clinical. <strong>All data stays on your device.</strong> Only birth data and readings are sent to the AI for synthesis.</p>
+    </div>
+    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:36px">
+      <button class="btn-primary" onclick="goToScreen('screen-basics')">Begin the Oracle</button>
+      <button class="btn-secondary" onclick="document.getElementById('load-input').click()">Load Saved Profile</button>
+    </div>
+    <input type="file" id="load-input" style="display:none" accept=".json" onchange="handleLoad(event)">
+  </div>
+</div>
+
+<!-- BASICS -->
+<div class="screen" id="screen-basics">
+  <div style="text-align:center;margin-bottom:28px">
+    <div class="label-sm" style="margin-bottom:10px">Step 1 · Foundation</div>
+    <h2>Your Birth Data</h2>
+    <p style="text-align:center;max-width:440px;margin:0 auto;font-size:15px">The root from which everything grows.</p>
+  </div>
+  <div class="card">
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Full Name at Birth</label>
+        <input type="text" class="form-input" id="inp-name" placeholder="Your full birth name">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Goes by / Preferred Name</label>
+        <input type="text" class="form-input" id="inp-preferred" placeholder="What people call you">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Date of Birth</label>
+        <input type="date" class="form-input" id="inp-date">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Exact Time of Birth</label>
+        <input type="time" class="form-input" id="inp-time">
+        <div style="font-size:12px;color:var(--text-dim);font-style:italic;margin-top:4px">Unknown? Use 12:00 — some readings approximate</div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Place of Birth</label>
+      <input type="text" class="form-input" id="inp-place" placeholder="City, Country">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Latitude <span style="opacity:0.5">(e.g. 35.6892)</span></label>
+        <input type="number" class="form-input" id="inp-lat" placeholder="Latitude" step="0.0001">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Longitude <span style="opacity:0.5">(e.g. 51.3890)</span></label>
+        <input type="number" class="form-input" id="inp-lon" placeholder="Longitude" step="0.0001">
+      </div>
+    </div>
+    <a href="https://www.latlong.net/" target="_blank" class="source-link">↗ Look up coordinates for your birth city</a>
+    <div id="basics-err" class="err-txt"></div>
+  </div>
+  <div style="display:flex;justify-content:space-between;margin-top:20px">
+    <button class="btn-ghost" onclick="goToScreen('screen-welcome')">← Back</button>
+    <button class="btn-primary" onclick="saveBasics()">Choose Systems →</button>
+  </div>
+</div>
+
+<!-- SELECTION -->
+<div class="screen" id="screen-selection">
+  <div style="text-align:center;margin-bottom:28px">
+    <div class="label-sm" style="margin-bottom:10px">Step 2 · Choose Your Systems</div>
+    <h2>Which systems shall speak?</h2>
+    <p style="text-align:center;max-width:500px;margin:0 auto;font-size:15px">Select any combination. More systems = richer portrait. You can calculate here or upload a PDF report for each.</p>
+  </div>
+  <div class="sel-grid" id="sel-grid"></div>
+  <div style="text-align:center;margin-bottom:16px">
+    <button class="btn-ghost" onclick="selAll()" style="margin-right:16px">Select All</button>
+    <button class="btn-ghost" onclick="selNone()">Clear All</button>
+  </div>
+  <div id="sel-err" class="err-txt" style="text-align:center;margin-bottom:12px"></div>
+  <div style="display:flex;justify-content:space-between;margin-top:8px">
+    <button class="btn-ghost" onclick="goToScreen('screen-basics')">← Back</button>
+    <button class="btn-primary" onclick="beginSystems()">Continue →</button>
+  </div>
+</div>
+
+<!-- DYNAMIC SYSTEM SCREENS -->
+<div id="sys-screens"></div>
+
+<!-- LOADING -->
+<div class="screen" id="screen-loading">
+  <div class="oracle-spinner">
+    <svg class="mandala" viewBox="0 0 120 120" fill="none">
+      <circle cx="60" cy="60" r="55" stroke="#C9A84C" stroke-width="0.8" opacity="0.4"/>
+      <circle cx="60" cy="60" r="40" stroke="#C9A84C" stroke-width="0.8" opacity="0.5"/>
+      <circle cx="60" cy="60" r="25" stroke="#C9A84C" stroke-width="0.8" opacity="0.6"/>
+      <circle cx="60" cy="60" r="10" stroke="#C9A84C" stroke-width="1" opacity="0.8"/>
+      <polygon points="60,5 107,82.5 13,82.5" stroke="#C9A84C" stroke-width="0.8" fill="none" opacity="0.5"/>
+      <polygon points="60,115 13,37.5 107,37.5" stroke="#C9A84C" stroke-width="0.8" fill="none" opacity="0.5"/>
+    </svg>
+    <div class="loading-text" id="loading-text">The Oracle is reading your stars...</div>
+    <div class="loading-step" id="loading-step">Weaving the systems</div>
+  </div>
+</div>
+
+<!-- REPORT -->
+<div class="screen" id="screen-report">
+  <div style="text-align:center;margin-bottom:36px">
+    <div class="label-sm" style="margin-bottom:14px">Your Living Mirror</div>
+    <div class="display-title" id="rpt-title" style="margin-bottom:10px">Oracle of Coherence</div>
+    <div class="display-sub" id="rpt-sub">A synthesis</div>
+  </div>
+  <div class="divider"><div class="divider-line"></div><div class="divider-glyph">✦</div><div class="divider-line"></div></div>
+  <div id="rpt-pills" style="text-align:center;margin:18px 0"></div>
+  <div class="divider"><div class="divider-line"></div><div class="divider-glyph">✦</div><div class="divider-line"></div></div>
+  <div id="rpt-body"></div>
+  <div class="data-controls">
+    <button class="btn-secondary" onclick="saveProfile()">↓ Save Profile</button>
+    <button class="btn-secondary" onclick="window.print()">⎙ Print / PDF</button>
+    <button class="btn-ghost" onclick="startOver()">New reading</button>
+  </div>
+</div>
+
+</div><!-- .app -->
+<script>
+// ── STARFIELD ─────────────────────────────────────────────────
+(function(){
+  const sf=document.getElementById('starfield');
+  for(let i=0;i<200;i++){
+    const s=document.createElement('div');s.className='star';
+    const sz=Math.random()*2.5+0.5;
+    s.style.cssText=`width:${sz}px;height:${sz}px;left:${Math.random()*100}%;top:${Math.random()*100}%;--a1:${Math.random()*0.5+0.1};--a2:${Math.random()*0.3+0.05};--d:${Math.random()*6+2}s;animation-delay:${Math.random()*6}s`;
+    sf.appendChild(s);
+  }
+})();
+
+// ── SYSTEMS DATA ──────────────────────────────────────────────
+const SYSTEMS=[
+  {id:'western',name:'Western Natal Astrology',icon:'☉',bg:'rgba(212,112,58,0.15)',tier:'Core · Tier 1',
+   desc:'Birth chart · Planets · Houses · Aspects',
+   url:'https://www.astro.com/cgi/chart.cgi',src:'Astro.com',
+   fields:[
+    {id:'w_rising',label:'Rising Sign (Ascendant)',ph:'e.g. Scorpio'},
+    {id:'w_sun',label:'Sun Sign',ph:'e.g. Capricorn'},
+    {id:'w_moon',label:'Moon Sign',ph:'e.g. Pisces'},
+    {id:'w_venus',label:'Venus Sign',ph:'e.g. Aquarius'},
+    {id:'w_mars',label:'Mars Sign',ph:'e.g. Aries'},
+    {id:'w_saturn',label:'Saturn Sign',ph:'e.g. Gemini'},
+    {id:'w_north_node',label:'North Node Sign',ph:'e.g. Cancer'},
+    {id:'w_south_node',label:'South Node Sign',ph:'e.g. Capricorn'},
+    {id:'w_8th_house',label:'8th House Sign',ph:'e.g. Scorpio'},
+    {id:'w_extra',label:'Notable aspects (optional)',ph:'e.g. Venus conjunct Pluto'},
+  ]},
+  {id:'vedic',name:'Vedic Astrology (Jyotish)',icon:'☾',bg:'rgba(123,94,167,0.15)',tier:'Core · Tier 1',
+   desc:'Nakshatras · Dashas · Karma cycles',
+   url:'https://www.astrosage.com/free/birth-chart.asp',src:'AstroSage.com',
+   fields:[
+    {id:'v_lagna',label:'Lagna (Ascendant)',ph:'e.g. Vrishchika (Scorpio)'},
+    {id:'v_moon_nak',label:'Moon Nakshatra',ph:'e.g. Rohini'},
+    {id:'v_sun_nak',label:'Sun Nakshatra',ph:'e.g. Uttara Ashadha'},
+    {id:'v_asc_nak',label:'Ascendant Nakshatra',ph:'e.g. Jyeshtha'},
+    {id:'v_dasha',label:'Current Mahadasha',ph:'e.g. Saturn Mahadasha 2022-2041'},
+    {id:'v_rahu',label:'Rahu placement',ph:'e.g. 10th house, Gemini'},
+    {id:'v_ketu',label:'Ketu placement',ph:'e.g. 4th house, Sagittarius'},
+  ]},
+  {id:'bazi',name:'Chinese Astrology (BaZi)',icon:'☯',bg:'rgba(74,173,168,0.15)',tier:'Core · Tier 1',
+   desc:'Four Pillars · Five Elements · Luck Cycles',
+   url:'https://bazipro.com/bazi-calculator/',src:'BaZi Pro',
+   fields:[
+    {id:'b_year',label:'Year Pillar',ph:'e.g. Ren Yin (Water Tiger)'},
+    {id:'b_month',label:'Month Pillar',ph:'e.g. Wu Zi (Earth Rat)'},
+    {id:'b_day',label:'Day Pillar (Day Master)',ph:'e.g. Jia Wood (Yang Wood)'},
+    {id:'b_hour',label:'Hour Pillar',ph:'e.g. Bing Shen (Fire Monkey)'},
+    {id:'b_elements',label:'Dominant elements',ph:'e.g. Strong Water, weak Fire'},
+    {id:'b_luck',label:'Current Luck Pillar',ph:'e.g. Yi Wei (Wood Goat) 2020-2030'},
+  ]},
+  {id:'hd',name:'Human Design',icon:'◈',bg:'rgba(201,168,76,0.12)',tier:'Synthesized · Tier 2',
+   desc:'Type · Authority · Profile · Centers · Gates',
+   url:'https://www.geneticmatrix.com/free-human-design-chart/',src:'Genetic Matrix',
+   fields:[
+    {id:'hd_type',label:'Type',ph:'e.g. Manifesting Generator'},
+    {id:'hd_auth',label:'Inner Authority',ph:'e.g. Sacral Authority'},
+    {id:'hd_profile',label:'Profile',ph:'e.g. 2/4 Hermit/Opportunist'},
+    {id:'hd_strat',label:'Strategy',ph:'e.g. To Respond'},
+    {id:'hd_notself',label:'Not-Self Theme',ph:'e.g. Frustration'},
+    {id:'hd_defined',label:'Defined Centers',ph:'e.g. Sacral, Heart, Spleen, Root'},
+    {id:'hd_open',label:'Open/Undefined Centers',ph:'e.g. Crown, Ajna, Throat, G'},
+    {id:'hd_cross',label:'Incarnation Cross (optional)',ph:'e.g. Right Angle Cross of the Four Ways'},
+    {id:'hd_gates',label:'Notable gates/channels (optional)',ph:'e.g. Gate 10, Channel 34-20'},
+  ]},
+  {id:'genekeys',name:'Gene Keys',icon:'❈',bg:'rgba(196,122,138,0.15)',tier:'Synthesized · Tier 2',
+   desc:'Activation · Venus · Pearl Sequences',
+   url:'https://genekeys.com/free-profile/',src:'GeneKeys.com',
+   fields:[
+    {id:'gk_lifework',label:"Life's Work GK",ph:'e.g. GK 10 · Shadow: Self-Obsession · Gift: Naturalness · Siddhi: Being'},
+    {id:'gk_evolution',label:'Evolution GK',ph:'e.g. GK 15 · Shadow: Dullness · Gift: Magnetism · Siddhi: Florescence'},
+    {id:'gk_radiance',label:'Radiance GK',ph:'e.g. GK 46 · Shadow: Seriousness · Gift: Delight · Siddhi: Ecstasy'},
+    {id:'gk_purpose',label:'Purpose GK',ph:'e.g. GK 25 · Shadow: Constriction · Gift: Acceptance · Siddhi: Universal Love'},
+    {id:'gk_attraction',label:'Attraction GK (Venus)',ph:'e.g. GK 44'},
+    {id:'gk_iq',label:'IQ GK (Pearl)',ph:'e.g. GK 17'},
+    {id:'gk_extra',label:'Shadow themes (optional)',ph:'e.g. working with self-obsession shadow'},
+  ]},
+  {id:'astrocarto',name:'Astrocartography',icon:'⊕',bg:'rgba(74,144,184,0.15)',tier:'Synthesized · Tier 2',
+   desc:'Geographic power lines · Where you bloom',
+   url:'https://www.astro.com/cgi/astrolog.cgi?o=welt',src:'Astro.com Maps',
+   fields:[
+    {id:'ac_sun',label:'Sun line regions',ph:'e.g. Barcelona, Spain'},
+    {id:'ac_moon',label:'Moon line regions',ph:'e.g. Lisbon, Portugal'},
+    {id:'ac_venus',label:'Venus line regions',ph:'e.g. Bali, Indonesia'},
+    {id:'ac_mars',label:'Mars line regions',ph:'e.g. New York, USA'},
+    {id:'ac_jupiter',label:'Jupiter line regions',ph:'e.g. Tokyo, Japan'},
+    {id:'ac_saturn',label:'Saturn line regions (optional)',ph:'e.g. Berlin, Germany'},
+    {id:'ac_current',label:'Where you currently live',ph:'e.g. London, UK'},
+  ]},
+  {id:'numerology',name:'Numerology',icon:'∞',bg:'rgba(63,180,117,0.12)',tier:'Hybrid · Tier 3',
+   desc:'Life Path · Expression · Soul Urge',
+   url:'https://www.numerologist.com/numerology-calculator/',src:'Numerologist.com',
+   fields:[
+    {id:'num_lifepath',label:'Life Path Number',ph:'e.g. 11 (Master Number)'},
+    {id:'num_expr',label:'Expression Number',ph:'e.g. 7'},
+    {id:'num_soul',label:'Soul Urge Number',ph:'e.g. 9'},
+    {id:'num_pers',label:'Personality Number (optional)',ph:'e.g. 3'},
+    {id:'num_bday',label:'Birthday Number (optional)',ph:'e.g. 21'},
+  ]},
+];
+
+const PROMPTS={
+  western:b=>`Birth: ${b.date}, ${b.time||'12:00'}, ${b.place} (lat:${b.lat||'?'} lon:${b.lon||'?'})
+Return ONLY this JSON, no other text:
+{"w_rising":"","w_sun":"","w_moon":"","w_venus":"","w_mars":"","w_saturn":"","w_north_node":"","w_south_node":"","w_8th_house":"","w_extra":"2-3 major aspects"}`,
+
+  vedic:b=>`Birth: ${b.date}, ${b.time||'12:00'}, ${b.place} (lat:${b.lat||'?'} lon:${b.lon||'?'})
+Use Lahiri ayanamsa. Return ONLY this JSON, no other text:
+{"v_lagna":"","v_moon_nak":"","v_sun_nak":"","v_asc_nak":"","v_dasha":"include period years","v_rahu":"house and sign","v_ketu":"house and sign"}`,
+
+  bazi:b=>`Birth: ${b.date}, ${b.time||'12:00'}, ${b.place}
+Use traditional Chinese calendar. Return ONLY this JSON, no other text:
+{"b_year":"Stem+Branch (element animal)","b_month":"","b_day":"Day Master stem and element","b_hour":"","b_elements":"elemental balance","b_luck":"current luck pillar with years"}`,
+
+  hd:b=>`Birth: ${b.date}, ${b.time||'12:00'}, ${b.place} (lat:${b.lat||'?'} lon:${b.lon||'?'})
+Return ONLY this JSON, no other text:
+{"hd_type":"","hd_auth":"","hd_profile":"X/Y Name/Name","hd_strat":"","hd_notself":"","hd_defined":"comma list","hd_open":"comma list","hd_cross":"Incarnation Cross name","hd_gates":"significant gates and channels"}`,
+
+  genekeys:b=>`Birth: ${b.date}, ${b.time||'12:00'}, ${b.place} (lat:${b.lat||'?'} lon:${b.lon||'?'})
+Return ONLY this JSON, no other text:
+{"gk_lifework":"GK N - Shadow: X - Gift: Y - Siddhi: Z","gk_evolution":"GK N - Shadow: X - Gift: Y - Siddhi: Z","gk_radiance":"GK N - Shadow: X - Gift: Y - Siddhi: Z","gk_purpose":"GK N - Shadow: X - Gift: Y - Siddhi: Z","gk_attraction":"GK N","gk_iq":"GK N","gk_extra":""}`,
+
+  astrocarto:b=>`Birth: ${b.date}, ${b.time||'12:00'}, ${b.place} (lat:${b.lat||'?'} lon:${b.lon||'?'})
+Return ONLY this JSON, no other text:
+{"ac_sun":"2-3 cities the Sun line passes through","ac_moon":"","ac_venus":"","ac_mars":"","ac_jupiter":"","ac_saturn":"","ac_current":"${b.place}"}`,
+
+  numerology:b=>`Name: ${b.name}, Birth: ${b.date}
+Use Pythagorean numerology. Return ONLY this JSON, no other text:
+{"num_lifepath":"number (e.g. 7 or 11 master)","num_expr":"number","num_soul":"number","num_pers":"number","num_bday":"day number"}`,
+};
+
+// ── STATE ─────────────────────────────────────────────────────
+let S={basics:{},selected:[],systems:{},curIdx:0};
+
+// ── NAV ───────────────────────────────────────────────────────
+function goToScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  const el=document.getElementById(id);
+  if(el){el.classList.add('active');window.scrollTo(0,0);}
+}
+
+// ── BASICS ────────────────────────────────────────────────────
+function saveBasics(){
+  const name=document.getElementById('inp-name').value.trim();
+  const preferred=document.getElementById('inp-preferred').value.trim();
+  const date=document.getElementById('inp-date').value;
+  const time=document.getElementById('inp-time').value;
+  const place=document.getElementById('inp-place').value.trim();
+  const lat=document.getElementById('inp-lat').value;
+  const lon=document.getElementById('inp-lon').value;
+  const err=document.getElementById('basics-err');
+  if(!name){err.textContent='Please enter your full birth name.';return;}
+  if(!date){err.textContent='Please enter your date of birth.';return;}
+  if(!place){err.textContent='Please enter your place of birth.';return;}
+  err.textContent='';
+  S.basics={name,preferred:preferred||name,date,time,place,lat,lon};
+  buildSelGrid();
+  goToScreen('screen-selection');
+}
+
+// ── SELECTION ─────────────────────────────────────────────────
+function buildSelGrid(){
+  // Default: all selected
+  if(S.selected.length===0) S.selected=SYSTEMS.map(s=>s.id);
+  const grid=document.getElementById('sel-grid');
+  grid.innerHTML='';
+  SYSTEMS.forEach(sys=>{
+    const sel=S.selected.includes(sys.id);
+    const card=document.createElement('div');
+    card.className='sel-card'+(sel?' selected':'');
+    card.id='selcard-'+sys.id;
+    card.onclick=()=>toggleSel(sys.id);
+    card.innerHTML=`<div class="sel-check">${sel?'✓':''}</div>
+      <div class="sel-icon-wrap" style="background:${sys.bg}">${sys.icon}</div>
+      <div class="sel-name">${sys.name}</div>
+      <div class="sel-desc">${sys.desc}</div>
+      <div class="sel-tier">${sys.tier}</div>`;
+    grid.appendChild(card);
+  });
+}
+
+function toggleSel(id){
+  const i=S.selected.indexOf(id);
+  if(i>=0)S.selected.splice(i,1); else S.selected.push(id);
+  const card=document.getElementById('selcard-'+id);
+  const on=S.selected.includes(id);
+  card.classList.toggle('selected',on);
+  card.querySelector('.sel-check').textContent=on?'✓':'';
+}
+function selAll(){S.selected=[];SYSTEMS.forEach(s=>{S.selected.push(s.id);const c=document.getElementById('selcard-'+s.id);c.classList.add('selected');c.querySelector('.sel-check').textContent='✓';});}
+function selNone(){S.selected=[];SYSTEMS.forEach(s=>{const c=document.getElementById('selcard-'+s.id);c.classList.remove('selected');c.querySelector('.sel-check').textContent='';});}
+
+function beginSystems(){
+  const err=document.getElementById('sel-err');
+  if(S.selected.length===0){err.textContent='Please select at least one system.';return;}
+  err.textContent='';
+  S.selected.forEach(id=>{if(!S.systems[id])S.systems[id]={method:'calculate',data:{},pdfText:'',pdfBase64:null};});
+  buildSysScreens();
+  showSys(0);
+}
+
+// ── PER-SYSTEM SCREENS ────────────────────────────────────────
+function buildSysScreens(){
+  const container=document.getElementById('sys-screens');
+  container.innerHTML='';
+  const total=S.selected.length;
+  S.selected.forEach((sysId,idx)=>{
+    const sys=SYSTEMS.find(s=>s.id===sysId);
+    const ss=S.systems[sysId];
+    const div=document.createElement('div');
+    div.className='screen';
+    div.id='screen-sys-'+sysId;
+    div.innerHTML=`
+      <div class="progress-wrap">
+        <div class="progress-header">
+          <span class="label-sm">System ${idx+1} of ${total}</span>
+          <span class="label-sm" style="color:var(--text-dim)">${sys.name}</span>
+        </div>
+        <div class="progress-track"><div class="progress-fill" style="width:${((idx+1)/total)*100}%"></div></div>
+        <div class="progress-dots">${S.selected.map((id,i)=>`<div class="pdot ${i<idx?'done':i===idx?'current':''}" title="${SYSTEMS.find(s=>s.id===id)?.name||id}"></div>`).join('')}</div>
+      </div>
+
+      <div class="sys-header">
+        <div class="sys-big-icon" style="background:${sys.bg};color:var(--gold)">${sys.icon}</div>
+        <div>
+          <div class="label-sm" style="margin-bottom:3px">${sys.tier}</div>
+          <h2 style="margin-bottom:2px">${sys.name}</h2>
+          <div style="font-size:14px;color:var(--text-dim);font-style:italic">${sys.desc}</div>
+        </div>
+      </div>
+
+      <div class="method-toggle">
+        <button class="method-btn ${ss.method==='calculate'?'active':''}" onclick="setMethod('${sysId}','calculate')">✦ Calculate Here</button>
+        <button class="method-btn ${ss.method==='upload'?'active':''}" onclick="setMethod('${sysId}','upload')">↑ Upload PDF</button>
+        <button class="method-btn ${ss.method==='skip'?'active':''}" onclick="setMethod('${sysId}','skip')">Skip</button>
+      </div>
+
+      <div id="sec-calc-${sysId}" style="display:${ss.method==='calculate'?'block':'none'}">
+        <div id="cloader-${sysId}" class="calc-loader" style="display:none">
+          <svg width="18" height="18" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8" stroke="#C9A84C" stroke-width="1.5" fill="none" stroke-dasharray="30 20"/></svg>
+          <span id="cloader-txt-${sysId}" style="font-size:14px;font-style:italic;color:var(--gold-light)">Calculating...</span>
+        </div>
+        <div style="margin-bottom:14px">
+          <a href="${sys.url}" target="_blank" class="source-link">↗ Get your report from ${sys.src} to fill in manually</a>
+          <div style="font-size:13px;color:var(--text-dim);font-style:italic;margin-top:5px">Fields will be auto-filled — review and correct as needed.</div>
+        </div>
+        <div class="form-row">
+          ${sys.fields.map(f=>`<div class="form-group">
+            <label class="form-label">${f.label}</label>
+            <input type="text" class="form-input" id="${f.id}" placeholder="${f.ph}" value="${(ss.data&&ss.data[f.id])||''}" oninput="onInput('${sysId}')">
+          </div>`).join('')}
+        </div>
+      </div>
+
+      <div id="sec-upload-${sysId}" style="display:${ss.method==='upload'?'block':'none'}">
+        <div style="margin-bottom:12px"><a href="${sys.url}" target="_blank" class="source-link">↗ Get your report from ${sys.src}</a></div>
+        <div class="upload-area">
+          <input type="file" accept=".pdf,.txt" onchange="handleUpload(event,'${sysId}')">
+          <div style="font-size:28px;margin-bottom:8px">📄</div>
+          <div style="font-size:15px;color:var(--text-dim);font-style:italic">Click to upload your ${sys.name} report</div>
+          <div style="font-family:'Raleway',sans-serif;font-size:11px;color:var(--gold-dim);margin-top:5px;letter-spacing:0.1em">PDF or TXT accepted</div>
+          <div id="upmsg-${sysId}" style="font-size:13px;color:var(--teal);margin-top:8px;display:none"></div>
+        </div>
+      </div>
+
+      <div id="sec-skip-${sysId}" style="display:${ss.method==='skip'?'block':'none'}">
+        <p style="font-size:15px;font-style:italic;color:var(--text-dim)">This system will be omitted. The synthesis adapts.</p>
+      </div>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:28px;flex-wrap:wrap;gap:12px">
+        <button class="btn-ghost" onclick="navSys(${idx},-1)">← ${idx===0?'Back to selection':'Previous'}</button>
+        <button class="btn-primary" onclick="navSys(${idx},1)">${idx===total-1?'Consult the Oracle →':'Next →'}</button>
+      </div>`;
+    container.appendChild(div);
+  });
+}
+
+function showSys(idx){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  if(idx<0){goToScreen('screen-selection');return;}
+  if(idx>=S.selected.length){generateOracle();return;}
+  const sysId=S.selected[idx];
+  S.curIdx=idx;
+  const el=document.getElementById('screen-sys-'+sysId);
+  if(el){el.classList.add('active');window.scrollTo(0,0);}
+  // Auto-calculate if method=calculate and no data
+  const ss=S.systems[sysId];
+  if(ss&&ss.method==='calculate'){
+    const hasData=Object.values(ss.data||{}).some(v=>v&&v.trim());
+    if(!hasData)autoCalc(sysId);
+  }
+}
+
+function navSys(cur,dir){
+  collectData(S.selected[cur]);
+  const next=cur+dir;
+  if(next<0){goToScreen('screen-selection');return;}
+  if(next>=S.selected.length){generateOracle();return;}
+  showSys(next);
+}
+
+function collectData(sysId){
+  const sys=SYSTEMS.find(s=>s.id===sysId);
+  if(!sys||S.systems[sysId]?.method!=='calculate')return;
+  const data={};
+  sys.fields.forEach(f=>{const el=document.getElementById(f.id);if(el)data[f.id]=el.value;});
+  S.systems[sysId].data=data;
+}
+
+function setMethod(sysId,method){
+  S.systems[sysId].method=method;
+  const screen=document.getElementById('screen-sys-'+sysId);
+  if(!screen)return;
+  screen.querySelectorAll('.method-btn').forEach((btn,i)=>{
+    btn.classList.toggle('active',['calculate','upload','skip'][i]===method);
+  });
+  ['calc','upload','skip'].forEach(m=>{
+    const el=document.getElementById(`sec-${m}-${sysId}`);
+    if(el)el.style.display=((m==='calc'&&method==='calculate')||(m==='upload'&&method==='upload')||(m==='skip'&&method==='skip'))?'block':'none';
+  });
+  if(method==='calculate'){
+    const hasData=Object.values(S.systems[sysId].data||{}).some(v=>v&&v.trim());
+    if(!hasData)autoCalc(sysId);
+  }
+}
+
+function onInput(sysId){collectData(sysId);}
+
+// ── AUTO-CALCULATE ────────────────────────────────────────────
+async function autoCalc(sysId){
+  const b=S.basics;
+  const sys=SYSTEMS.find(s=>s.id===sysId);
+  if(!sys||!b.date)return;
+  const loaderEl=document.getElementById('cloader-'+sysId);
+  const loaderTxt=document.getElementById('cloader-txt-'+sysId);
+  if(!loaderEl)return;
+
+  loaderEl.style.display='flex';
+  loaderEl.className='calc-loader';
+  loaderEl.querySelector('svg').style.animation='';
+  if(loaderTxt)loaderTxt.textContent=`Consulting the oracle for your ${sys.name}...`;
+
+  sys.fields.forEach(f=>{const el=document.getElementById(f.id);if(el){el.disabled=true;el.style.opacity='0.4';}});
+
+  const promptFn=PROMPTS[sysId];
+  if(!promptFn){
+    if(loaderTxt)loaderTxt.textContent='No prompt defined for this system.';
+    sys.fields.forEach(f=>{const el=document.getElementById(f.id);if(el){el.disabled=false;el.style.opacity='1';}});
+    return;
+  }
+
+  try{
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:1000,
+        system:'You are an expert astrologer and numerologist. You respond ONLY with a raw JSON object. No prose, no markdown, no code fences, no preamble. Your entire response starts with { and ends with }.',
+        messages:[{role:'user',content:promptFn(b)}]
+      })
+    });
+
+    if(!resp.ok){
+      const errData=await resp.json().catch(()=>({}));
+      if(resp.status===429){
+        if(loaderTxt)loaderTxt.textContent='Rate limited — retrying in 4 seconds...';
+        sys.fields.forEach(f=>{const el=document.getElementById(f.id);if(el){el.disabled=false;el.style.opacity='1';}});
+        await new Promise(r=>setTimeout(r,4000));
+        return autoCalc(sysId);
+      }
+      throw new Error(errData.error?.message||`API error ${resp.status}`);
+    }
+
+    const apiData=await resp.json();
+    const raw=apiData.content.map(b=>b.text||'').join('').trim();
+    console.log(`[${sysId}] raw:`,raw.slice(0,200));
+
+    const start=raw.indexOf('{');const end=raw.lastIndexOf('}');
+    if(start===-1||end===-1)throw new Error('Response was not JSON: '+raw.slice(0,100));
+    const result=JSON.parse(raw.slice(start,end+1));
+
+    const data={};
+    sys.fields.forEach(f=>{
+      const el=document.getElementById(f.id);
+      if(el){el.value=result[f.id]||'';el.disabled=false;el.style.opacity='1';data[f.id]=el.value;}
+    });
+    S.systems[sysId].data=data;
+
+    loaderEl.className='calc-loader done';
+    loaderEl.querySelector('svg circle').setAttribute('stroke','#4AADA8');
+    if(loaderTxt)loaderTxt.textContent='✓ Calculated — review and edit any values below';
+
+  }catch(e){
+    console.error(`[${sysId}]`,e);
+    loaderEl.className='calc-loader err';
+    if(loaderTxt)loaderTxt.innerHTML=`⚠ ${e.message} &nbsp;<button onclick="autoCalc('${sysId}')" style="font-family:'Raleway',sans-serif;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold);background:transparent;border:1px solid var(--gold-dim);border-radius:2px;padding:3px 8px;cursor:pointer">Retry</button>`;
+    sys.fields.forEach(f=>{const el=document.getElementById(f.id);if(el){el.disabled=false;el.style.opacity='1';}});
+  }
+}
+
+// ── UPLOAD ────────────────────────────────────────────────────
+async function handleUpload(event,sysId){
+  const file=event.target.files[0];if(!file)return;
+  const msgEl=document.getElementById('upmsg-'+sysId);
+  if(msgEl){msgEl.style.display='block';msgEl.textContent='⏳ Reading...';}
+  try{
+    if(file.type==='application/pdf'){
+      const b64=await toB64(file);
+      S.systems[sysId].pdfBase64=b64;S.systems[sysId].pdfMimeType=file.type;
+      if(msgEl)msgEl.textContent='✓ '+file.name+' ready';
+    }else{
+      S.systems[sysId].pdfText=await file.text();
+      if(msgEl)msgEl.textContent='✓ '+file.name+' loaded';
+    }
+    S.systems[sysId].fileName=file.name;
+  }catch(e){if(msgEl){msgEl.textContent='✗ Error reading file';msgEl.style.color='#E05555';}}
+}
+function toB64(file){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(',')[1]);r.onerror=()=>rej(new Error('Read failed'));r.readAsDataURL(file);});}
+
+// ── GENERATE ──────────────────────────────────────────────────
+async function generateOracle(){
+  S.selected.forEach(id=>collectData(id));
+  goToScreen('screen-loading');
+  animateLoading();
+  try{
+    const prompt=buildPrompt();
+    const msgs=buildMessages(prompt);
+    const synthesis=await callClaude(msgs);
+    renderReport(synthesis);
+    goToScreen('screen-report');
+  }catch(e){
+    console.error(e);
+    showSys(S.curIdx);
+    setTimeout(()=>alert('The Oracle encountered an error: '+e.message+'\n\nPlease try again.'),100);
+  }
+}
+
+function animateLoading(){
+  const texts=['The Oracle is reading your stars...','Weaving the threads of karma...','Listening to your natal song...','Mapping the terrain of your soul...','Consulting the ancient systems...','Finding the coherent pattern...'];
+  const steps=['Gathering system data','Reading planetary signatures','Interpreting elemental patterns','Decoding your design','Contemplating Gene Keys pathways','Synthesizing the streams','Weaving your portrait'];
+  let idx=0;
+  const tEl=document.getElementById('loading-text'),sEl=document.getElementById('loading-step');
+  const iv=setInterval(()=>{
+    if(!document.getElementById('screen-loading').classList.contains('active')){clearInterval(iv);return;}
+    idx++;tEl.textContent=texts[idx%texts.length];sEl.textContent=steps[Math.min(idx,steps.length-1)];
+  },2500);
+}
+
+function buildPrompt(){
+  const b=S.basics;let sysData='';
+  S.selected.forEach(id=>{
+    const sys=SYSTEMS.find(s=>s.id===id);
+    const ss=S.systems[id];
+    if(!ss||ss.method==='skip')return;
+    sysData+=`\n\n### ${sys.name}\n`;
+    if(ss.method==='upload'){
+      if(ss.pdfText)sysData+=`[Uploaded report]\n${ss.pdfText.slice(0,3000)}\n`;
+      else if(ss.pdfBase64)sysData+=`[PDF document uploaded — see attached]\n`;
+      else sysData+=`[No upload received]\n`;
+    }else{
+      const filled=Object.entries(ss.data||{}).filter(([,v])=>v&&v.trim());
+      if(filled.length===0)sysData+=`[No data — estimate from birth: ${b.date}, ${b.time||'noon'}, ${b.place}]\n`;
+      else filled.forEach(([k,v])=>{sysData+=`${k}: ${v}\n`;});
+    }
+  });
+  const active=S.selected.filter(id=>S.systems[id]?.method!=='skip').map(id=>SYSTEMS.find(s=>s.id===id)?.name).join(', ');
+  return `You are the Oracle of Coherence — a deeply wise, poetic, embodied synthesizer of ancient and modern self-knowledge systems. You speak as a somatic practitioner, tantric philosopher, and complexity scientist. You are frank, warm, precise, and never reductive.
+
+SUBJECT:
+Name: ${b.name} (goes by: ${b.preferred})
+Birth: ${b.date}, ${b.time||'noon'}, ${b.place}
+Systems: ${active}
+
+SYSTEM DATA:
+${sysData}
+
+Generate a synthesis report as a JSON object. Each value: 3-5 paragraphs of rich, embodied, specific prose. Address ${b.preferred} directly as "you". Return ONLY valid JSON, no fences.
+
+{
+  "opening": "2-paragraph poetic invocation. Reference 2-3 specific data points that make this person singular.",
+  "mission": "Life mission from North Node, Life Path, Incarnation Cross, Purpose Gene Key, Vedic destiny. What they are here to DO and BE.",
+  "values": "Core values from Venus, Soul Urge, Venus Gene Key, Moon Nakshatra. What nourishes vs depletes.",
+  "karma": "Karmic patterns from Ketu/South Node, Saturn, BaZi Day Master, Gene Key shadows. What recurs and is being healed.",
+  "vocation": "Career from 10th house, HD Type+Strategy, BaZi useful element, Expression number, Life Work GK. HOW they work, not just field.",
+  "geography": "Where they thrive from Astrocartography lines, BaZi elemental needs. Name specific cities or regions.",
+  "relationships_romantic": "Romantic love from 7th house, HD Authority, Venus/Mars dynamic. How they love, what activates them, patterns to transcend.",
+  "sexuality": "Erotic and somatic nature from Mars, 8th house, HD Sacral/Root/Solar Plexus, Gene Key erotic gifts/shadows. Write in frank somatic practitioner language. Erotic archetype, how they access aliveness, what they need to open fully, shadow patterns around desire, the gift in embodied eros.",
+  "friendships": "Relational field from 11th house, HD Profile, numerology. Who they need, how friendship nourishes vs drains.",
+  "timing": "Current life phase from Vedic Dasha, BaZi luck pillar, HD themes. What this period is FOR.",
+  "shadow_invitation": "Primary shadow thread appearing across multiple systems. Named with compassion and precision.",
+  "gift_signature": "Their unique gift — what only they can offer in this specific combination.",
+  "closing": "2-paragraph closing invocation. A transmission, not a summary."
+}`;
+}
+
+function buildMessages(prompt){
+  const userContent=[];
+  S.selected.forEach(id=>{
+    const ss=S.systems[id];
+    if(ss?.method==='upload'&&ss.pdfBase64)userContent.push({type:'document',source:{type:'base64',media_type:ss.pdfMimeType||'application/pdf',data:ss.pdfBase64}});
+  });
+  userContent.push({type:'text',text:prompt});
+  return [{role:'user',content:userContent}];
+}
+
+async function callClaude(messages){
+  const resp=await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:8000,messages})
+  });
+  if(!resp.ok){const e=await resp.json().catch(()=>({}));throw new Error(e.error?.message||`API error ${resp.status}`);}
+  const data=await resp.json();
+  const text=data.content.map(b=>b.text||'').join('');
+  const start=text.indexOf('{');const end=text.lastIndexOf('}');
+  if(start===-1||end===-1)throw new Error('Could not parse synthesis response');
+  return JSON.parse(text.slice(start,end+1));
+}
+
+// ── REPORT ────────────────────────────────────────────────────
+const SECTIONS=[
+  {key:'mission',title:'Mission & Soul Purpose',icon:'✦',color:'var(--gold)',sub:'Why you are here'},
+  {key:'values',title:'Values & Nourishment',icon:'♡',color:'var(--rose)',sub:'What your heart is made of'},
+  {key:'karma',title:'Karma & Ancestral Patterns',icon:'∞',color:'var(--accent)',sub:'What you are healing'},
+  {key:'vocation',title:'Vocation & Creative Life',icon:'◈',color:'var(--gold)',sub:'How you are designed to work'},
+  {key:'geography',title:'Geography & Place',icon:'⊕',color:'var(--accent2)',sub:'Where you bloom'},
+  {key:'relationships_romantic',title:'Romantic Love & Intimacy',icon:'◯',color:'var(--rose)',sub:'How you love and are loved'},
+  {key:'sexuality',title:'Eros & Somatic Nature',icon:'❈',color:'var(--ember)',sub:'Your erotic blueprint'},
+  {key:'friendships',title:'Friendship & Belonging',icon:'☽',color:'var(--teal)',sub:'Your relational field'},
+  {key:'timing',title:'Current Life Phase',icon:'☉',color:'var(--gold)',sub:'What this season is for'},
+  {key:'shadow_invitation',title:'The Shadow Invitation',icon:'◐',color:'var(--accent)',sub:'The pattern across all systems'},
+  {key:'gift_signature',title:'Your Gift Signature',icon:'✦',color:'var(--teal)',sub:'What only you can offer'},
+];
+
+function renderReport(syn){
+  const name=S.basics.preferred||S.basics.name||'Seeker';
+  document.getElementById('rpt-title').textContent=name+"'s Oracle";
+  const count=S.selected.filter(id=>S.systems[id]?.method!=='skip').length;
+  document.getElementById('rpt-sub').textContent=`A synthesis of ${count} systems · ${fmtDate(S.basics.date)}`;
+  document.getElementById('rpt-pills').innerHTML=S.selected.map(id=>{
+    const ss=S.systems[id];const sys=SYSTEMS.find(x=>x.id===id);
+    if(!ss||ss.method==='skip')return'';
+    return`<span class="pill">${sys.icon} ${sys.name.split(' ')[0]} ${ss.method==='upload'?'↑':'✦'}</span>`;
+  }).join('');
+  const body=document.getElementById('rpt-body');body.innerHTML='';
+  if(syn.opening){
+    const d=mkEl('div','report-sec',`text-align:center`);
+    d.innerHTML=`<div style="font-size:26px;margin-bottom:16px;opacity:0.6">✦</div><div class="report-text" style="font-size:19px;font-style:italic;max-width:660px;margin:0 auto;color:var(--gold-light)">${fmt(syn.opening)}</div>`;
+    body.appendChild(d);body.appendChild(mkDivider());
+  }
+  SECTIONS.forEach(sec=>{
+    if(!syn[sec.key])return;
+    const d=mkEl('div','report-sec');
+    d.innerHTML=`<div class="report-sec-header"><div class="sec-icon" style="color:${sec.color}">${sec.icon}</div><div><div class="sec-title">${sec.title}</div><div class="sec-sub">${sec.sub}</div></div></div><div class="report-text">${fmt(syn[sec.key])}</div>`;
+    body.appendChild(d);
+  });
+  if(syn.closing){
+    body.appendChild(mkDivider());
+    const d=mkEl('div','report-sec','text-align:center');
+    d.innerHTML=`<div class="report-text" style="font-size:19px;font-style:italic;max-width:660px;margin:0 auto;color:var(--gold-light)">${fmt(syn.closing)}</div><div style="font-size:26px;margin-top:18px;opacity:0.45">✦</div>`;
+    body.appendChild(d);
+  }
+}
+
+function mkEl(tag,cls,style){const d=document.createElement(tag);if(cls)d.className=cls;if(style)d.style.cssText=style;return d;}
+function mkDivider(){const d=mkEl('div','divider');d.innerHTML='<div class="divider-line"></div><div class="divider-glyph">✦</div><div class="divider-line"></div>';return d;}
+function fmt(text){if(!text)return'';return text.split(/\n+/).filter(p=>p.trim()).map(p=>`<p>${p}</p>`).join('');}
+function fmtDate(ds){if(!ds)return'';try{return new Date(ds+'T12:00:00').toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});}catch(e){return ds;}}
+
+// ── SAVE / LOAD ───────────────────────────────────────────────
+function saveProfile(){
+  const payload={version:'1.1',savedAt:new Date().toISOString(),basics:S.basics,selected:S.selected,systems:{}};
+  S.selected.forEach(id=>{const ss=S.systems[id];if(ss)payload.systems[id]={method:ss.method,data:ss.data||{},pdfText:ss.pdfText||''};});
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;
+  a.download=`oracle-${(S.basics.preferred||'profile').toLowerCase().replace(/\s+/g,'-')}.json`;
+  a.click();URL.revokeObjectURL(url);
+}
+
+function handleLoad(event){
+  const file=event.target.files[0];if(!file)return;
+  const r=new FileReader();
+  r.onload=function(e){
+    try{
+      const data=JSON.parse(e.target.result);
+      if(!data.basics)throw new Error('Invalid');
+      S.basics=data.basics;S.selected=data.selected||SYSTEMS.map(s=>s.id);S.systems=data.systems||{};
+      goToScreen('screen-basics');
+      setTimeout(()=>{
+        const map={'inp-name':'name','inp-preferred':'preferred','inp-date':'date','inp-time':'time','inp-place':'place','inp-lat':'lat','inp-lon':'lon'};
+        Object.entries(map).forEach(([elId,key])=>{const el=document.getElementById(elId);if(el&&data.basics[key])el.value=data.basics[key];});
+      },100);
+    }catch(err){alert('Could not load profile — file may be corrupted.');}
+  };
+  r.readAsText(file);
+}
+
+function startOver(){
+  S={basics:{},selected:[],systems:{},curIdx:0};
+  document.getElementById('sys-screens').innerHTML='';
+  goToScreen('screen-welcome');
+}
+</script>
+</body>
+</html>
